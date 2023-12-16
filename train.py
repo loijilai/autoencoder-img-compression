@@ -8,21 +8,27 @@ import numpy as np
 import os
 
 # Local imports
-from model.autoencoder import Autoencoder
+from model.components.autoencoder import Autoencoder
 from utils.dataset import imgDataset
 
 
 # Parameters for training
 def parse_args():
+    dataset_path = "/tmp2/loijilai/itct/lossy-image-compression/dataset_orig"
+    checkpoint_path = "/tmp2/loijilai/itct/vanillaAE/out/debug_checkpoint.pt"
+    # checkpoint_path = None
+    num_of_epochs = 15
+    save_at = "/tmp2/loijilai/itct/vanillaAE/out"
+
     batch_size = 1
     validation_split = 0.1
     lr_rate = 0.001
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', default='../dataset/', help='Root directory of Images')
-    parser.add_argument('--checkpoint_path', default=None, help='Use to resume training from last checkpoint')
-    parser.add_argument('--num_of_epochs', default=30,help='Epoch to stop training at',type=int)
-    parser.add_argument('--save_at', default='out/', help='Directory where training state will be saved')
+    parser.add_argument('--dataset_path', default=dataset_path, help='Root directory of Images')
+    parser.add_argument('--checkpoint_path', default=checkpoint_path, help='Use to resume training from last checkpoint')
+    parser.add_argument('--num_of_epochs', default=num_of_epochs,help='Epoch to stop training at',type=int)
+    parser.add_argument('--save_at', default=save_at, help='Directory where training state will be saved')
 
     parser.add_argument('--batch_size', default=batch_size, help='Batch size for training', type=int)
     parser.add_argument('--validation_split', default=validation_split, help='Validation split for training', type=float)
@@ -47,19 +53,22 @@ def main():
     }
 
     # If train from checkpoint
-    # if(args.checkpoint_path):
-    #     checkpoint = torch.load(args.checkpoint_path)
-    #     model.load_state_dict(checkpoint['model_state'])
-    #     optimizer.load_state_dict(checkpoint['optimizer_state'])
-    #     history = checkpoint['history']
-    #     start_epoch = checkpoint['epoch'][-1]
-    # else:
-    #     start_epoch = 1
-    start_epoch = 1
+    if(args.checkpoint_path):
+        checkpoint = torch.load(args.checkpoint_path)
+        model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        history = checkpoint['history']
+        start_epoch = checkpoint['history']['epoch_data'][-1] + 1
+        print(f"Continue training at epoch: {start_epoch}")
+    else:
+        start_epoch = 1
 
     # Dataset & Dataloader
     raw_dataset = imgDataset(root_dir=args.dataset_path)
     dataset_size = len(raw_dataset)
+    # print(dataset_size)
+    # for img in raw_dataset:
+    #     print(img.size())
     indices = list(range(dataset_size))
     split = int(np.floor(args.validation_split * dataset_size))
     np.random.shuffle(indices) # Shuffle dataset
@@ -71,8 +80,10 @@ def main():
     validation_loader = torch.utils.data.DataLoader(raw_dataset, batch_size=args.batch_size, sampler=validation_sampler)
 
     # Start training
-    pbar = tqdm(total=args.num_of_epochs, initial=start_epoch-1)
-    for epoch in range(start_epoch, start_epoch + args.num_of_epochs):
+    print("Start training...")
+    epoch_to_train = args.num_of_epochs - start_epoch + 1
+    pbar = tqdm(total=args.num_of_epochs, initial=start_epoch-1, desc = "Training progress")
+    for epoch in range(start_epoch, start_epoch+epoch_to_train):
         model.train()
         train_loss = 0
         # train
@@ -112,16 +123,18 @@ def main():
         pbar.update(1)
 
     pbar.close()
+    print("Finish training...")
 
     # save checkpoint
+    print(f"Saving checkpoint to {args.save_at}...")
     checkpoint = {
         'model_state': model.state_dict(),
         'optimizer_state': optimizer.state_dict(),
         'history': history,
-        'epoch': epoch
     }
 
-    torch.save(checkpoint, os.path.join(args.save_at, "debug"))
+    torch.save(checkpoint, os.path.join(args.save_at, "debug_checkpoint.pth"))
+    print("Finish!")
 
 if __name__ == '__main__':
     main()

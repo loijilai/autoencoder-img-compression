@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from components.quantizer import Binarizer
+from model.components.quantizer import Binarizer
 
 class Autoencoder(nn.Module):
     # todo: skip connections
@@ -23,15 +23,15 @@ class Autoencoder(nn.Module):
         )
 
         self.dec = nn.Sequential(
-            nn.ConvTranspose2d(128,64, kernel_size=5, stride=2, padding=2),
+            nn.ConvTranspose2d(128,64, kernel_size=5, stride=2, padding=2, output_padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
 
-            nn.ConvTranspose2d(64,32, kernel_size=5, stride=2, padding=2),
+            nn.ConvTranspose2d(64,32, kernel_size=5, stride=2, padding=2, output_padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
 
-            nn.ConvTranspose2d(32,3, kernel_size=5 ,stride=2, padding=2),
+            nn.ConvTranspose2d(32,3, kernel_size=5 ,stride=2, padding=2, output_padding=1),
             nn.BatchNorm2d(3),
             nn.ReLU(),
         )
@@ -44,25 +44,23 @@ class Autoencoder(nn.Module):
         return x
 
 
-# Test script
-def test_autoencoder():
-    # Instantiate the model
-    model = Autoencoder()
+# def test_autoencoder():
+#     model = Autoencoder()
 
-    # Create a dummy input tensor (batch size, channels, height, width)
-    dummy_input = torch.randn(1, 3, 256, 256)
+#     # Create a dummy input tensor (batch size, channels, height, width)
+#     dummy_input = torch.randn(1, 3, 256, 256)
 
-    # Forward pass through the model
-    try:
-        output = model(dummy_input)
-        print("Forward pass successful.")
-    except Exception as e:
-        print(f"Error during forward pass: {e}")
-        return
+#     # Forward pass through the model
+#     try:
+#         output = model(dummy_input)
+#         print("Forward pass successful.")
+#     except Exception as e:
+#         print(f"Error during forward pass: {e}")
+#         return
 
-    # Check the output shape
-    assert output.shape == dummy_input.shape, f"Output shape {output.shape} does not match input shape {dummy_input.shape}"
-    print(f"Output shape {output.shape} matches input shape.")
+#     # Check the output shape
+#     assert output.shape == dummy_input.shape, f"Output shape {output.shape} does not match input shape {dummy_input.shape}"
+#     print(f"Output shape {output.shape} matches input shape.")
 
-if __name__ == "__main__":
-    test_autoencoder()
+# if __name__ == "__main__":
+#     test_autoencoder()

@@ -1,9 +1,11 @@
 import torch
 import torchvision.transforms.functional as TF
-from model.autoencoder import Autoencoder
+from components.autoencoder import Autoencoder
 from bitstring import BitArray
 from PIL import Image
 import lzma
+# for testing
+import numpy as np
 
 class Encoder():
     def __init__(self, model_path:str):
@@ -50,3 +52,34 @@ class Encoder():
             fp.write(comp_S2.tobytes())
             fp.write(comp_S3.tobytes())
             fp.write(comp_y.tobytes())
+
+# def create_mock_checkpoint(model, path="mock_checkpoint.pth"):
+#     torch.save({'model_state': model.state_dict()}, path)
+
+# def test_encoder():
+#     # Create a mock checkpoint for testing
+#     model = Autoencoder().float()
+#     # create_mock_checkpoint(model)
+
+#     # Initialize the Encoder with the mock checkpoint
+#     encoder = Encoder("/tmp2/loijilai/itct/vanillaAE/out/debug_checkpoint.pt")
+
+#     # Create a dummy test image (replace with an actual test image path)
+#     test_image = np.random.randint(0, 256, (259, 260, 3), dtype=np.uint8)
+#     test_image = Image.fromarray(test_image)
+
+#     # Save the test image temporarily
+#     test_image_path = "/tmp2/loijilai/itct/lossy-image-compression/dataset_orig/0001.png"
+#     # test_image.save(test_image_path)
+
+#     # Test the encoding process
+#     encoded_output, pad_w, pad_h = encoder.encode(test_image_path)
+#     print(f"Encoded output shape: {encoded_output.shape}")
+
+#     # Test the encode_and_save process
+#     output_path = "encoded_output.lzma"
+#     encoder.encode_and_save(test_image_path, output_path)
+#     print(f"Encoded file saved to {output_path}")
+
+# if __name__ == "__main__":
+#     test_encoder()

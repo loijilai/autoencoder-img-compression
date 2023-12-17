@@ -16,6 +16,7 @@ def parse_args():
     dataset_path = "./dataset"
     checkpoint_path = None
     save_at = "./out"
+    save_frequency = 10
     file_format = 'bmp'
 
     num_of_epochs = 20
@@ -27,6 +28,7 @@ def parse_args():
     parser.add_argument('--dataset_path', default=dataset_path, help='Root directory of Images')
     parser.add_argument('--checkpoint_path', default=checkpoint_path, help='Use to resume training from last checkpoint')
     parser.add_argument('--save_at', default=save_at, help='Directory where training state will be saved')
+    parser.add_argument('--save_frequency', default=save_frequency, help='Save checkpoint every n epochs', type=int)
     parser.add_argument('--file_format', default=file_format, help='File format of images to train on')
 
     parser.add_argument('--num_of_epochs', default=num_of_epochs,help='Epoch to stop training at',type=int)
@@ -124,12 +126,14 @@ def main():
         history['train_losses'].append(train_loss/len(train_loader))
         history['val_losses'].append(eval_loss/len(validation_loader))
         history['epoch_data'].append(epoch)
-        checkpoint = {
-            'model_state': model.state_dict(),
-            'optimizer_state': optimizer.state_dict(),
-            'history': history,
-        }
-        torch.save(checkpoint, os.path.join(args.save_at, f"checkpoint_{epoch}.pth"))
+        if epoch % args.save_frequency == 0:
+            print(f"====== Saving checkpoint to {args.save_at}... ======")
+            checkpoint = {
+                'model_state': model.state_dict(),
+                'optimizer_state': optimizer.state_dict(),
+                'history': history,
+            }
+            torch.save(checkpoint, os.path.join(args.save_at, f"checkpoint_{epoch}.pth"))
 
     pbar.close()
     print("Finish training...")

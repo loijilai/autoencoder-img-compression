@@ -1,18 +1,28 @@
 import argparse
-from model.components.encoder import Encoder
+from model.encoder import Encoder
 import os
 from tqdm import tqdm
 
-parser = argparse.ArgumentParser()
+def parse_args():
+    parser = argparse.ArgumentParser()
+    model = "/tmp2/loijilai/itct/vanillaAE/out/debug_checkpoint.pt"
+    image_folder = "/tmp2/loijilai/itct/vanillaAE/out/original"
+    out_folder = "/tmp2/loijilai/itct/vanillaAE/out/compressed"
+    parser.add_argument('--model', default=model, help='Path for model checkpoint file')
+    parser.add_argument('--image_folder', default=image_folder, help='Directory which holds the images to be compressed')
+    parser.add_argument('--out_folder', default=out_folder, help='Directory which will hold the compressed images')
+    args = parser.parse_args()
+    return args
 
-parser.add_argument('--model', default='./out/main.tar', help='Path for model checkpoint file [default: ./out/main.tar]')
-parser.add_argument('--image_folder', default='./dataset/', help='Directory which holds the images to be compressed [default: ./dataset/]')
-parser.add_argument('--out_folder', default='./out/compressed/', help='Directory which will hold the compressed images [default: ./out/compressed/]')
-args = parser.parse_args()
+def main():
+    args = parse_args()
+    inputs = os.listdir(args.image_folder)
+    encoder = Encoder(args.model)
 
-inputs = os.listdir(args.image_folder)
-encoder = Encoder(args.model)
+    for image in tqdm(inputs):
+        print(f'compressing {image}...')
+        encoder.encode_and_save(os.path.join(args.image_folder, image), os.path.join(args.out_folder, f'{image[:-4]}comp.xfr'))
+    print('Done!')
 
-for image in inputs:
-    print(f'compressing {args.image}...')
-    encoder.encode_and_save(os.path.join(args.image_folder, image), os.path.join(args.out_folder, f'{image[:-4]}comp.xfr'))
+if __name__ == '__main__':
+    main()

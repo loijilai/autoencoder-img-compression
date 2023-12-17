@@ -3,7 +3,7 @@ from torchvision.transforms import functional as TF
 import numpy as np
 import lzma
 from bitstring import BitArray
-from components.autoencoder import Autoencoder
+from model.components.autoencoder import Autoencoder
 # for testing
 import os
 
@@ -24,7 +24,7 @@ class Decoder():
             # the last output channel dimension of the encoder is 128
             y = np.empty((1,128,S2,S3)).ravel()
 
-            print('Reading latent representation')
+            # Read the latent representation
             j = 0
             byte = fp.read(1)
             eight_bit_array = None

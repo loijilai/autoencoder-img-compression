@@ -1,6 +1,6 @@
 import torch
 import torchvision.transforms.functional as TF
-from components.autoencoder import Autoencoder
+from model.components.autoencoder import Autoencoder
 from bitstring import BitArray
 from PIL import Image
 import lzma

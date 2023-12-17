@@ -26,13 +26,9 @@ class Encoder():
         x = TF.to_tensor(padded_img)
         x = x.unsqueeze(0)
         x = self.model.enc(x)
-        x = self.model.binarizer(x)
+        x_quantized = self.model.binarizer(x, training=False)
 
-        # postprocess the binarization result
-        y = x.cpu().detach().numpy()
-        y[y<0] = 0
-        y[y>0] = 1
-        return y, pad_w, pad_h
+        return x_quantized, pad_w, pad_h
     
     def encode_and_save(self, in_path:str, out_path:str): 
         # y:latent representation[batch, channel, h, w], pad_w, pad_h: padding

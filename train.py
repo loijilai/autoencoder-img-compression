@@ -1,7 +1,6 @@
 import argparse
 import torch
 import torch.nn as nn
-import time
 from tqdm import tqdm
 from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
@@ -14,22 +13,23 @@ from utils.dataset import imgDataset
 
 # Parameters for training
 def parse_args():
-    dataset_path = "/tmp2/loijilai/itct/lossy-image-compression/dataset_orig"
-    checkpoint_path = "/tmp2/loijilai/itct/vanillaAE/out/debug_checkpoint.pt"
-    # checkpoint_path = None
-    num_of_epochs = 15
-    save_at = "/tmp2/loijilai/itct/vanillaAE/out"
+    dataset_path = "./dataset"
+    checkpoint_path = None
+    save_at = "./out"
+    file_format = 'bmp'
 
-    batch_size = 1
+    num_of_epochs = 20
+    batch_size = 2
     validation_split = 0.1
     lr_rate = 0.001
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', default=dataset_path, help='Root directory of Images')
     parser.add_argument('--checkpoint_path', default=checkpoint_path, help='Use to resume training from last checkpoint')
-    parser.add_argument('--num_of_epochs', default=num_of_epochs,help='Epoch to stop training at',type=int)
     parser.add_argument('--save_at', default=save_at, help='Directory where training state will be saved')
+    parser.add_argument('--file_format', default=file_format, help='File format of images to train on')
 
+    parser.add_argument('--num_of_epochs', default=num_of_epochs,help='Epoch to stop training at',type=int)
     parser.add_argument('--batch_size', default=batch_size, help='Batch size for training', type=int)
     parser.add_argument('--validation_split', default=validation_split, help='Validation split for training', type=float)
     parser.add_argument('--lr_rate', default=lr_rate, help='Learning rate for training', type=float)
@@ -64,11 +64,8 @@ def main():
         start_epoch = 1
 
     # Dataset & Dataloader
-    raw_dataset = imgDataset(root_dir=args.dataset_path)
+    raw_dataset = imgDataset(root_dir=args.dataset_path, file_format=args.file_format)
     dataset_size = len(raw_dataset)
-    # print(dataset_size)
-    # for img in raw_dataset:
-    #     print(img.size())
     indices = list(range(dataset_size))
     split = int(np.floor(args.validation_split * dataset_size))
     np.random.shuffle(indices) # Shuffle dataset
@@ -78,11 +75,17 @@ def main():
     validation_sampler = SubsetRandomSampler(val_indices)
     train_loader = torch.utils.data.DataLoader(raw_dataset, batch_size=args.batch_size, sampler=train_sampler)
     validation_loader = torch.utils.data.DataLoader(raw_dataset, batch_size=args.batch_size, sampler=validation_sampler)
+    print("====== Dataset Information ======")
+    print(f"Train dataset size: {len(train_indices)}")
+    print(f"Validation dataset size: {len(val_indices)}")
+    print(f"Number of batches per epoch: {len(train_loader)}")
 
     # Start training
-    print("Start training...")
+    print("====== Start training...======")
     epoch_to_train = args.num_of_epochs - start_epoch + 1
-    pbar = tqdm(total=args.num_of_epochs, initial=start_epoch-1, desc = "Training progress")
+    total_batch = args.num_of_epochs * len(train_loader)
+    start_batch = (start_epoch-1) * len(train_loader)
+    pbar = tqdm(total=total_batch, initial=start_batch, desc = "Training progress")
     for epoch in range(start_epoch, start_epoch+epoch_to_train):
         model.train()
         train_loss = 0
@@ -102,7 +105,8 @@ def main():
             optimizer.step()
             exp_lr_scheduler.step()
             train_loss += loss.item()
-        print(f'Epoch: {epoch}\tTrain loss: {train_loss/len(train_loader)}')
+            pbar.update(1)
+        print(f'Epoch: {epoch}\tTrain loss: {train_loss/len(train_indices)}')
 
         # evaluate
         model.eval() 
@@ -114,26 +118,31 @@ def main():
             output = model(data)
             loss = criterion(output, target)
             eval_loss += loss.item()
-        print(f'Epoch: {epoch}\tEval loss: {eval_loss/len(validation_loader)}')
+        print(f'Epoch: {epoch}\tEval loss: {eval_loss/len(val_indices)}')
 
-        # save statistics
+        # save statistics and checkpoint
         history['train_losses'].append(train_loss/len(train_loader))
         history['val_losses'].append(eval_loss/len(validation_loader))
         history['epoch_data'].append(epoch)
-        pbar.update(1)
+        checkpoint = {
+            'model_state': model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'history': history,
+        }
+        torch.save(checkpoint, os.path.join(args.save_at, f"checkpoint_{epoch}.pth"))
 
     pbar.close()
     print("Finish training...")
 
-    # save checkpoint
-    print(f"Saving checkpoint to {args.save_at}...")
+    # save final checkpoint
+    print(f"====== Saving checkpoint to {args.save_at}... ======")
     checkpoint = {
         'model_state': model.state_dict(),
         'optimizer_state': optimizer.state_dict(),
         'history': history,
     }
 
-    torch.save(checkpoint, os.path.join(args.save_at, "debug_checkpoint.pth"))
+    torch.save(checkpoint, os.path.join(args.save_at, "final_checkpoint.pth"))
     print("Finish!")
 
 if __name__ == '__main__':

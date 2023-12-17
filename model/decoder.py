@@ -14,7 +14,7 @@ class Decoder():
         self.model.load_state_dict(checkpoint['model_state'])
         self.model.eval()
 
-    def decompress(self, in_path:str, out_path:str):
+    def decode_and_save(self, in_path:str, out_path:str, file_format:str='bmp'):
         with lzma.open(in_path, 'rb') as fp:
             pad_w = int.from_bytes(fp.read(1), byteorder='big', signed=False)
             pad_h = int.from_bytes(fp.read(1), byteorder='big', signed=False)
@@ -43,7 +43,7 @@ class Decoder():
 
         width, height = img.size
         img = img.crop((pad_w, pad_h, width, height))
-        img.save(out_path, "png")
+        img.save(out_path, file_format)
         return y
     
 # def create_mock_compressed_file(in_path, S2=32, S3=32):
@@ -67,7 +67,7 @@ class Decoder():
 #     # Test the decompress method
 #     mock_compressed_path = "/tmp2/loijilai/itct/vanillaAE/model/encoded_output.lzma"
 #     output_image_path = "output_image.png"
-#     decoder.decompress(mock_compressed_path, output_image_path)
+#     decoder.decode_and_save(mock_compressed_path, output_image_path)
 
 #     # Check if the output image file is created
 #     assert os.path.exists(output_image_path), "Output image file was not created"

@@ -44,7 +44,7 @@ def ssim(img1_pth, img2_pth):
 
 def get_file_path(folder_path):
     files = [f"{folder_path}/{f}" for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-    return sorted(files)
+    return files
 
 def get_pixels(img_pth):
     img = cv2.imread(img_pth)
@@ -53,56 +53,61 @@ def get_pixels(img_pth):
 
 def main():
     parser = argparse.ArgumentParser()
-    folder_path1 = "/tmp2/loijilai/itct/vanillaAE/out/original"
-    folder_path2 = "/tmp2/loijilai/itct/vanillaAE/out/decompressed"
-    out_folder = "/tmp2/loijilai/itct/vanillaAE/out/scores"
-    parser.add_argument('--folder_path1', default=folder_path1, help='Root directory of original images')
-    parser.add_argument('--folder_path2', default=folder_path2, help='Root directory of compressed images')
-    parser.add_argument('--out_folder', default=out_folder, help='Directory which will hold the scores')
+    folder_path_original = "./out/original"
+    folder_path_compressed = "./out/compressed"
+    folder_path_reconstructed = "./out/reconstructed"
+    out_filename = "./out/scores/result.json"
+    file_format = "bmp"
+    parser.add_argument('--folder_path_original', default=folder_path_original, help='Root directory of original images')
+    parser.add_argument('--folder_path_compressed', default=folder_path_compressed, help='Root directory of compressed images')
+    parser.add_argument('--folder_path_reconstructed', default=folder_path_reconstructed, help='Root directory of reconstructed images')
+    parser.add_argument('--out_file_name', default=out_filename, help='Output filename which will hold the scores')
+    parser.add_argument('--file_format', default=file_format, help='File format of the images')
+    args = parser.parse_args()
 
-    files1 = get_file_path(folder_path1)
-    files2 = get_file_path(folder_path2)
+    files_path = get_file_path(args.folder_path_original)
 
     psnr_list = []
     ssim_list = []
     compression_ratio_list = []
-    original_data_rate_list = []
-    compressed_data_rate_list = []
+    filename_list = []
 
-    for img1, img2 in zip(files1, files2):
-        img1_name = img1.split("/")[-1]
-        img2_name = img2.split("/")[-1]
-        print(f"Comparing {img1_name} and {img2_name}")
-        psnr_list.append(psnr(img1, img2))
-        ssim_list.append(ssim(img1, img2))
-        original_data_rate_list.append(round(os.path.getsize(img1) / get_pixels(img1), 3))
-        compressed_data_rate_list.append(round(os.path.getsize(img2) / get_pixels(img2), 3))
-        compression_ratio_list.append(round(os.path.getsize(img1) / os.path.getsize(img2), 3))
+    for file in files_path:
+        filename = file.split("/")[-1].split(".")[0]
+        filename_list.append(filename)
+        orig = os.path.join(args.folder_path_original, f"{filename}.{args.file_format}")
+        comp = os.path.join(args.folder_path_compressed, f"{filename}comp.xfr")
+        recon = os.path.join(args.folder_path_reconstructed, f"{filename}comp.{args.file_format}")
+        print(f"====== Comparing {filename} ======")
+        print(f"Original: {orig}", f"Compressed: {comp}", f"Reconstructed: {recon}", sep="\n")
+
+        # Calculate PSNR and SSIM between orig and recon
+        psnr_list.append(psnr(orig, recon))
+        ssim_list.append(ssim(orig, recon))
+
+        # Calculate compression ratio between orig and comp
+        comp_ratio = round(os.path.getsize(orig) / os.path.getsize(comp), 3)
+        compression_ratio_list.append(comp_ratio)
+        print(f"Compression ratio: {comp_ratio}")
     
     average_psnr = round(sum(psnr_list) / len(psnr_list), 3)
     average_ssim = round(sum(ssim_list) / len(ssim_list), 3)
     average_compression_ratio = round(sum(compression_ratio_list) / len(compression_ratio_list), 3)
-    average_original_data_rate = round(sum(original_data_rate_list) / len(original_data_rate_list), 3)
-    average_compression_data_rate = round(sum(compressed_data_rate_list) / len(compressed_data_rate_list), 3)
+    print(f"====== Result summary ======")
     print(f"Average PSNR: {average_psnr}")
     print(f"Average SSIM: {average_ssim}")
     print(f"Average compression ratio: {average_compression_ratio}")
-    print(f"Average original data rate: {average_original_data_rate}")
-    print(f"Average compressed data rate: {average_compression_data_rate}")
 
     # write to json file
-    with open(f"{out_folder}/result.json", 'w') as f:
+    with open(f"{out_filename}", 'w') as f:
         result = {
             "psnr_list": psnr_list,
             "ssim_list": ssim_list,
             "compression_ratio_list": compression_ratio_list,
-            "original_data_rate_list": original_data_rate_list,
-            "compressed_data_rate_list": compressed_data_rate_list,
             "average_psnr": average_psnr,
             "average_ssim": average_ssim,
             "average_compression_ratio": average_compression_ratio,
-            "average_original_data_rate": average_original_data_rate,
-            "average_compression_data_rate": average_compression_data_rate,
+            "filename_list": filename_list,
         }
         json.dump(result, f, indent=4)
 

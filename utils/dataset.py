@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
 
 class imgDataset(Dataset):
-    def __init__(self, root_dir, file_format='.png'):
+    def __init__(self, root_dir, file_format):
         self.root_dir = root_dir
         # self.transform = transform
         self.image_files = [f for f in os.listdir(root_dir) if file_format in f]

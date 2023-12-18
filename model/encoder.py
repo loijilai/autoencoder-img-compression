@@ -26,7 +26,7 @@ class Encoder():
         x = TF.to_tensor(padded_img)
         x = x.unsqueeze(0)
         x = self.model.enc(x)
-        x_quantized = self.model.binarizer(x)
+        x_quantized = self.model.binarizer(x, is_train=False)
 
         return x_quantized, pad_w, pad_h
     

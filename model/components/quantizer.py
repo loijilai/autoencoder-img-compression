@@ -4,25 +4,33 @@ import torch
 # The class structure is modified from https://github.com/abskj/lossy-image-compression
 class STEBinarizer(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, input):
-        input = torch.tanh(input) # normalize latent representation in range: [-1, 1]
-        rand = torch.rand(input.shape).to(input.device) # used as a random threshold
-        prob = (1 + input) / 2 # range: [0, 1], indicates how likely the quantized value will be 1
-        eps = torch.zeros(input.shape).to(input.device) # used to add to latent representation to achieve binarization 
-        eps[rand <= prob] = (1 - input)[rand <= prob]
-        eps[rand > prob] = (-input - 1)[rand > prob]
-        quantized = (input + eps + 1) / 2  # (-1|1) -> (0|1)
-        return quantized
+    def forward(ctx, input, is_train):
+        if is_train:
+            # During training, use the stochastic binarization
+            input = torch.tanh(input) # normalize latent representation in range: [-1, 1]
+            rand = torch.rand(input.shape).to(input.device) # used as a random threshold
+            prob = (1 + input) / 2 # range: [0, 1], indicates how likely the quantized value will be 1
+            eps = torch.zeros(input.shape).to(input.device) # used to add to latent representation to achieve binarization 
+            eps[rand <= prob] = (1 - input)[rand <= prob]
+            eps[rand > prob] = (-input - 1)[rand > prob]
+            quantized = (input + eps + 1) // 2 # (-1|1) -> (0|1)
+            return quantized
+        else:
+            sign = torch.sign(input)
+            return (sign + 1) // 2 # (-1|1) -> (0|1)
 
     @staticmethod
     def backward(ctx, grad_output):
         # Straight-through: Just pass the gradient
-        return grad_output
+        return grad_output, None
     
 # A wrapper for the STEBinarizer
 class Binarizer(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x):
-        return STEBinarizer.apply(x)
+    def forward(self, x, is_train):
+        return STEBinarizer.apply(x, is_train)
+
+# binarizer = Binarizer()
+# x = torch.tensor([-1, 0.5, 0.2, 0.8, 1], dtype=torch.float32, requires_grad=True)

@@ -19,8 +19,8 @@ def parse_args():
     save_frequency = 10
     file_format = 'bmp'
 
-    num_of_epochs = 20
-    batch_size = 2
+    num_of_epochs = 200
+    batch_size = 25
     validation_split = 0.1
     lr_rate = 0.001
 
@@ -41,6 +41,11 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    # Handle directory
+    if not os.path.exists(args.save_at):
+        os.makedirs(args.save_at)
+
     model = Autoencoder().float()
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr_rate)

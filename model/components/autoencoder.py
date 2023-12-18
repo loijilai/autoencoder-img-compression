@@ -37,9 +37,10 @@ class Autoencoder(nn.Module):
         )
         self.binarizer = Binarizer()
 
-    def forward(self, x):
+    def forward(self, x, is_train=True):
+        # is_train: True for training, False for inference
         x = self.enc(x)
-        x = self.binarizer(x)
+        x = self.binarizer(x, is_train)
         x = self.dec(x)
         return x
 

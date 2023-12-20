@@ -13,11 +13,11 @@ class STEBinarizer(torch.autograd.Function):
             eps = torch.zeros(input.shape).to(input.device) # used to add to latent representation to achieve binarization 
             eps[rand <= prob] = (1 - input)[rand <= prob]
             eps[rand > prob] = (-input - 1)[rand > prob]
-            quantized = (input + eps + 1) // 2 # (-1|1) -> (0|1)
+            quantized = input + eps
             return quantized
         else:
             sign = torch.sign(input)
-            return (sign + 1) // 2 # (-1|1) -> (0|1)
+            return sign
 
     @staticmethod
     def backward(ctx, grad_output):

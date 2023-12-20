@@ -27,6 +27,8 @@ class Encoder():
         x = x.unsqueeze(0)
         x = self.model.enc(x)
         x_quantized = self.model.binarizer(x, is_train=False)
+        # quantized range is {-1, 1}
+        x_quantized = (x_quantized + 1) // 2
 
         return x_quantized, pad_w, pad_h
     

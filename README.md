@@ -103,8 +103,10 @@ options:
 
 ## Further improvement
 * The autoencoder architecture consists of only three CNN layers, deeper architecture as well as residual connection may be applied to improve model capability to learn representation
-* Our entropy model is not learned, this is not an end-to-end learned optimized image compression. The entropy coding use `lzma` package as a separate module.
-* We use stochastic binary quantization here, other quantization method may be added
+* Our entropy model is not learned, this is not an end-to-end learned optimized image compression. The entropy coding use `lzma` package as a separate module
+* As above mentioned, current loss function evaluate only distortion loss, we can try to add other distortion metric like ms-ssim, or adding rate loss.
+* Our implementation use stochastic binary quantization, other quantization method may be considered
+* There is a mismatch in quantization between train and test time, which might harm the model performance
 
 ## Reference
 This is a simple project built for the purpose of learning autoencoder in image compression task. We rely on other people's work and do not intend to infringe upon anyone's rights.

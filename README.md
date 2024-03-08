@@ -101,7 +101,7 @@ options:
     * Specify the image format to be decode to: e.g. `python decode.py --file_format bmp`
     * In `test.py`, file_format is used to match the filename between original image and the reconstructed image: `python test.py --file_format bmp`
 
-## Further improvement
+## Further improvements
 * The autoencoder architecture consists of only three CNN layers, deeper architecture as well as residual connection may be applied to improve model capability to learn representation
 * Our entropy model is not learned, this is not an end-to-end learned optimized image compression. The entropy coding use `lzma` package as a separate module
 * As above mentioned, current loss function evaluate only distortion loss, we can try to add other distortion metric like ms-ssim, or adding rate loss.
@@ -111,8 +111,7 @@ options:
 ## Reference
 This is a simple project built for the purpose of learning autoencoder in image compression task. We rely on other people's work and do not intend to infringe upon anyone's rights.
 
-1. This project is a direct modification on this repository: [lossy-image-compression](https://github.com/abskj/lossy-image-compression).  
-  Modification:
+1. lossy-image-compression](https://github.com/abskj/lossy-image-compression).  
     * Simplify the model architecture
     * Simplify the stochastic binarization code
     * Remove data augmentation in dataset class
